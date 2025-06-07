@@ -35,6 +35,11 @@
   "get_procedure_from_encounter",
   "procedure_prescription",
   "therapy_plan",
+  "repeat_on",
+  "repeat_till",
+  "repeat_this_event",
+  "repeat_interval",
+  "max_occurrences",
   "column_break_17",
   "appointment_time",
   "end_time",
@@ -42,6 +47,13 @@
   "add_video_conferencing",
   "event",
   "google_meet_link",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
   "section_therapies",
   "therapy_types",
   "create_therapy_sessions",
@@ -451,10 +463,91 @@
    "fieldname": "patient_email",
    "fieldtype": "Data",
    "label": "Patient Email"
+  },
+  {
+   "fieldname": "repeat_on",
+   "fieldtype": "Select",
+   "label": "Repeat On",
+   "options": "Daily\nWeekly\nMonthly\nYearly",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "monday",
+   "fieldtype": "Check",
+   "label": "monday",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "tuesday",
+   "fieldtype": "Check",
+   "label": "Tuesday",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "wednesday",
+   "fieldtype": "Check",
+   "label": " Wednesday",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "thursday",
+   "fieldtype": "Check",
+   "label": "Thursday",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "friday",
+   "fieldtype": "Check",
+   "label": " Friday",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "saturday",
+   "fieldtype": "Check",
+   "label": "Saturday",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "sunday",
+   "fieldtype": "Check",
+   "label": "Sunday",
+   "read_only": 1
+  },
+  {
+   "fieldname": "repeat_till",
+   "fieldtype": "Date",
+   "label": "Repeat Till",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "repeat_this_event",
+   "fieldtype": "Check",
+   "label": "Repeat This Event",
+   "read_only": 1
+  },
+  {
+   "fieldname": "repeat_interval",
+   "fieldtype": "Int",
+   "label": "Repeat Interval",
+   "read_only": 1
+  },
+  {
+   "fieldname": "max_occurrences",
+   "fieldtype": "Int",
+   "label": "Max Occurrences",
+   "read_only": 1
   }
  ],
  "links": [],
- "modified": "2025-04-16 18:07:58.563796",
+ "modified": "2025-06-07 21:42:12.340107",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Appointment",

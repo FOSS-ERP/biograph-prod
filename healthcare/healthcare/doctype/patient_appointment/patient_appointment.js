@@ -500,6 +500,7 @@ let check_and_set_availability = function(frm) {
 	let overlap_appointments = null;
 	let appointment_based_on_check_in = false;
 	let is_block_booking = false;
+	let is_recurring_booking = false;
 
 	show_availability();
 
@@ -530,7 +531,20 @@ let check_and_set_availability = function(frm) {
 					description: __('Enable to book an appointment for a custom time block instead of predefined slots'),
 					onchange: function() {
 						is_block_booking = this.get_value();
-						toggle_booking_type(d, is_block_booking);
+						is_recurring_booking = 0
+						toggle_booking_type(d, is_block_booking, is_recurring_booking);
+					}
+				},
+				{ 
+					fieldtype: 'Check', 
+					fieldname: 'repeat_this_appointment', 
+					label: 'Repeat This Appointment', 
+					default: 0, 
+					description: 'Enable recurring functionality',
+					onchange: function() {
+						is_recurring_booking = this.get_value();
+						is_block_booking = 0
+						toggle_booking_type(d, is_block_booking, is_recurring_booking);
 					}
 				},
 				{ fieldtype: 'Section Break', fieldname: 'slots_section' },
@@ -553,6 +567,112 @@ let check_and_set_availability = function(frm) {
 					description: __('End time of the block appointment')
 				},
 				{ fieldtype: 'HTML', fieldname: 'available_slots' },
+				{ fieldtype: 'Section Break', fieldname: 'recurring_field_section1', hidden: 1, },
+				{
+					fieldtype: 'Check',
+					fieldname: 'repeat_on_daily',
+					label: 'Daily',
+					default: 0,
+					onchange:()=>{
+						toggle_repeted_on(d, is_recurring_booking)
+					}
+				},
+				{ fieldtype: 'Column Break', fieldname: 'break1_' },
+				{
+					fieldtype: 'Check',
+					fieldname: 'repeat_on_weekly',
+					label: 'Weekly',
+					default: 0,
+					onchange:()=>{
+						toggle_repeted_on(d, is_recurring_booking)
+					}
+				},
+				{ fieldtype: 'Column Break', fieldname: 'break2_' },
+				{
+					fieldtype: 'Check',
+					fieldname: 'repeat_on_monthly',
+					label: 'Monthly',
+					default: 0,
+					onchange:()=>{
+						toggle_repeted_on(d, is_recurring_booking)
+					}
+				},
+				{ fieldtype: 'Column Break', fieldname: 'break3_' },
+				{
+					fieldtype: 'Check',
+					fieldname: 'repeat_on_yearly',
+					label: 'Yearly',
+					default: 0,
+					onchange:()=>{
+						toggle_repeted_on(d, is_recurring_booking)
+					}
+				},
+				{ fieldtype: 'Section Break', fieldname: 'recurring_field_section3', hidden: 1 },
+				{
+					fieldtype: 'Check',
+					fieldname: 'monday',
+					label: 'Monday'
+				},
+				{
+					fieldtype: 'Check',
+					fieldname: 'tuesday',
+					label: 'Tuesday'
+				},
+				{ fieldtype: 'Column Break', fieldname: 'day_break2' },
+				{
+					fieldtype: 'Check',
+					fieldname: 'wednesday',
+					label: 'Wednesday'
+				},
+				{
+					fieldtype: 'Check',
+					fieldname: 'thursday',
+					label: 'Thursday'
+				},
+				{ fieldtype: 'Column Break', fieldname: 'day_break4' },
+				{
+					fieldtype: 'Check',
+					fieldname: 'friday',
+					label: 'Friday'
+				},
+				{
+					fieldtype: 'Check',
+					fieldname: 'saturday',
+					label: 'Saturday'
+				},
+				{ fieldtype: 'Column Break', fieldname: 'day_break6' },
+				{
+					fieldtype: 'Check',
+					fieldname: 'sunday',
+					label: 'Sunday'
+				},
+				{ fieldtype: 'Section Break', fieldname: 'recurring_field_section2', hidden: 1 },
+				{ 
+					fieldtype: 'Date', 
+					fieldname: 'repeat_till', 
+					label: 'Repeat Till', 
+					description: 'End date for recurrence series',
+				},
+				{ 
+					fieldtype: 'Int', 
+					fieldname: 'repeat_interval', 
+					label: 'Repeat Interval', 
+					default: 1,
+					description: 'Every N periods (e.g., every 2 weeks)',
+				},
+				{ 
+					fieldtype: 'Int', 
+					fieldname: 'max_occurrences', 
+					label: 'Max Occurrences', 
+					description: 'Maximum number of appointments',
+				},
+				{ 
+					fieldtype: 'Int', 
+					fieldname: 'occurrence_count', 
+					label: 'Occurrence Count', 
+					read_only: 1, 
+					default: 0,
+				}
 			],
 			primary_action_label: __('Book'),
 			primary_action: async function() {
@@ -627,6 +747,36 @@ let check_and_set_availability = function(frm) {
 							}
 						}
 					});
+				}else if (is_recurring_booking){
+					let values = d.get_values();
+					frm.set_value("repeat_this_event", values.repeat_this_appointment)
+					if(values.repeat_on_daily){
+						frm.set_value("repeat_on", "Daily")
+					}
+					if(values.repeat_on_weekly){
+						frm.set_value("repeat_on", "Weekly")
+					}
+					if(values.repeat_on_monthly){
+						frm.set_value("repeat_on", "Monthly")
+					}
+					if(values.repeat_on_yearly){
+						frm.set_value("repeat_on", "yearly")
+					}
+					const checkbox_fields = [
+						'monday',
+						'tuesday',
+						'wednesday',
+						'thursday',
+						'friday',
+						'saturday',
+						'sunday'
+					];
+					checkbox_fields.forEach(fieldname => {
+						frm.set_value(fieldname, values[fieldname])
+					});
+					frm.set_value("repeat_till", values.repeat_till)
+					frm.set_value("repeat_interval", values.repeat_interval)
+					frm.set_value("max_occurrences", values.max_occurrences)
 				} else {
 					frm.set_value('appointment_time', selected_slot);
 					add_video_conferencing = add_video_conferencing && !d.$wrapper.find(".opt-out-check").is(":checked")
@@ -700,7 +850,11 @@ let check_and_set_availability = function(frm) {
 			'practitioner': frm.doc.practitioner,
 			'appointment_date': frm.doc.appointment_date,
 		});
-
+		d.fields_dict['repeat_on_weekly'].df.onchange = () =>{
+			if(d.get_value('repeat_on_weekly')){
+				d.set_df_property('recurring_field_section3', 'hidden', 0);
+			}
+		}
 		let selected_department = frm.doc.department;
 
 		d.fields_dict['department'].df.onchange = () => {
@@ -726,7 +880,7 @@ let check_and_set_availability = function(frm) {
 		let fd = d.fields_dict;
 
 		d.fields_dict['appointment_date'].df.onchange = () => {
-			if (is_block_booking) {
+			if (is_block_booking && !is_recurring_booking) {
 				if (d.get_value('appointment_date') && d.get_value('from_time') && d.get_value('to_time') && 
 				    d.get_value('from_time') < d.get_value('to_time')) {
 					d.get_primary_btn().attr('disabled', null);
@@ -758,7 +912,7 @@ let check_and_set_availability = function(frm) {
 		d.fields_dict['practitioner'].df.onchange = () => {
 			if (d.get_value('practitioner') && d.get_value('practitioner') != selected_practitioner) {
 				selected_practitioner = d.get_value('practitioner');
-				if (!is_block_booking) {
+				if (!is_block_booking && !is_recurring_booking) {
 					show_slots(d, fd);
 				} else if (d.get_value('appointment_date') && 
 				    d.get_value('from_time') && d.get_value('to_time') && 
@@ -770,15 +924,38 @@ let check_and_set_availability = function(frm) {
 
 		d.show();
 	}
-	
-	function toggle_booking_type(d, is_block) {
+	function toggle_repeted_on(d, is_recurring_booking){
+		const checkbox_fields = [
+			'repeat_on_daily',
+			'repeat_on_weekly',
+			'repeat_on_monthly',
+			'repeat_on_yearly'
+		];
+
+		checkbox_fields.forEach(fieldname => {
+			d.fields_dict[fieldname].$wrapper.find('input').on('change', function () {
+				if (this.checked) {
+					// Uncheck all other checkboxes
+					checkbox_fields.forEach(other => {
+						if (other !== fieldname) {
+							d.set_value(other, 0);
+						}
+					});
+				}
+			});
+		});
+	}
+	function toggle_booking_type(d, is_block, is_recurring_booking) {	
 		if (is_block) {
+			d.set_df_property('repeat_this_appointment', 'hidden', 1);
 			d.set_df_property('available_slots', 'hidden', 1);
 			d.set_df_property('from_time', 'hidden', 0);
 			d.set_df_property('to_time', 'hidden', 0);
 			d.set_df_property('from_time', 'reqd', 1);
 			d.set_df_property('to_time', 'reqd', 1);
-			
+			d.set_df_property('slots_section', 'hidden', 0);
+			d.set_df_property('recurring_field_section1', 'hidden', 1);
+			d.set_df_property('recurring_field_section2', 'hidden', 1);
 			selected_slot = null;
 			
 			d.set_title(__('Block Time Booking'));
@@ -790,19 +967,37 @@ let check_and_set_availability = function(frm) {
 			    d.get_value('from_time') < d.get_value('to_time')) {
 				d.get_primary_btn().attr('disabled', null);
 			} else {
-				d.get_primary_btn().attr('disabled', true);
+				d.get_primary_btn().attr('disabled', null);
 			}
+		} else if (is_recurring_booking){
+			d.set_df_property('from_time', 'reqd', 0);
+			d.set_df_property('to_time', 'reqd', 0);
+			d.set_df_property('available_slots', 'hidden', 1);
+			d.set_df_property('from_time', 'hidden', 1);
+			d.set_df_property('to_time', 'hidden', 1);
+			d.set_df_property('from_time', 'reqd', 0);
+			d.set_df_property('to_time', 'reqd', 0);
+			d.set_df_property('block_booking', 'hidden', 1);
+			d.fields_dict.available_slots.$wrapper.html('');
+			d.set_df_property('slots_section', 'hidden', 1);
+			d.set_df_property('recurring_field_section1', 'hidden', 0);
+			d.set_df_property('recurring_field_section2', 'hidden', 0);
+		
 		} else {
+			d.set_df_property('repeat_this_appointment', 'hidden', 0);
+			d.set_df_property('block_booking', 'hidden', 0);
+			d.set_df_property('recurring_field_section1', 'hidden', 1);
+			d.set_df_property('recurring_field_section2', 'hidden', 1);
 			d.set_df_property('available_slots', 'hidden', 0);
 			d.set_df_property('from_time', 'hidden', 1);
 			d.set_df_property('to_time', 'hidden', 1);
 			d.set_df_property('from_time', 'reqd', 0);
 			d.set_df_property('to_time', 'reqd', 0);
-			
+			d.set_df_property('available_slots', 'hidden', 0);
 			d.set_title(__('Available slots'));
-			
 			if (d.get_value('practitioner') && d.get_value('appointment_date')) {
 				show_slots(d, d.fields_dict);
+				console.log("enter 2")
 			}
 		}
 	}

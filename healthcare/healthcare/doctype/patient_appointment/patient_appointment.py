@@ -68,6 +68,73 @@ class PatientAppointment(Document):
 		self.set_postition_in_queue()
 
 
+	import frappe
+	from datetime import timedelta
+	from frappe.utils import getdate, add_days, add_months, add_years, nowdate
+
+	def create_repeated_appointments(appointment_name):
+		original = frappe.get_doc("Appointment", appointment_name)
+		
+		frequency = None
+		if original.repeat_on_daily:
+			frequency = "Daily"
+		elif original.repeat_on_weekly:
+			frequency = "Weekly"
+		elif original.repeat_on_monthly:
+			frequency = "Monthly"
+		elif original.repeat_on_yearly:
+			frequency = "Yearly"
+
+		if not frequency:
+			frappe.throw("Please select a repeat frequency (Daily, Weekly, Monthly, Yearly)")
+
+		repeat_till = getdate(original.repeat_till) if original.repeat_till else None
+		interval = original.repeat_interval or 1
+		max_occurrences = original.max_occurrences or 100
+
+		current_date = getdate(original.appointment_date)
+		count = 0
+
+		while True:
+			# Determine next date
+			if frequency == "Daily":
+				current_date = add_days(current_date, interval)
+			elif frequency == "Weekly":
+				current_date = add_days(current_date, 7 * interval)
+			elif frequency == "Monthly":
+				current_date = add_months(current_date, interval)
+			elif frequency == "Yearly":
+				current_date = add_years(current_date, interval)
+
+			# Stop if repeat_till is crossed or max_occurrences reached
+			if repeat_till and current_date > repeat_till:
+				break
+			if count >= max_occurrences:
+				break
+
+			# If weekly, check if selected weekday matches
+			if frequency == "Weekly":
+				weekday_map = {
+					0: original.monday,
+					1: original.tuesday,
+					2: original.wednesday,
+					3: original.thursday,
+					4: original.friday,
+					5: original.saturday,
+					6: original.sunday,
+				}
+				if not weekday_map[current_date.weekday()]:
+					continue
+
+			# Create new appointment
+			new_appointment = frappe.copy_doc(original)
+			new_appointment.appointment_date = current_date
+			new_appointment.flags.ignore_mandatory = True
+			new_appointment.insert()
+			count += 1
+
+		frappe.msgprint(f"{count} repeated appointments created.")
+
 	def before_save(self):
 		# Always ensure duration is set
 		self.ensure_duration_is_set()
