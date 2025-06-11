@@ -66,33 +66,34 @@ class PatientAppointment(Document):
 		self.set_title()
 		self.update_event()
 		self.set_postition_in_queue()
+		if self.repeat_this_event:
+			self.create_repeated_appointments()
 
 
 	import frappe
 	from datetime import timedelta
 	from frappe.utils import getdate, add_days, add_months, add_years, nowdate
 
-	def create_repeated_appointments(appointment_name):
-		original = frappe.get_doc("Appointment", appointment_name)
+	def create_repeated_appointments(self):
 		
 		frequency = None
-		if original.repeat_on_daily:
+		if self.repeat_on_daily:
 			frequency = "Daily"
-		elif original.repeat_on_weekly:
+		elif self.repeat_on_weekly:
 			frequency = "Weekly"
-		elif original.repeat_on_monthly:
+		elif self.repeat_on_monthly:
 			frequency = "Monthly"
-		elif original.repeat_on_yearly:
+		elif self.repeat_on_yearly:
 			frequency = "Yearly"
 
 		if not frequency:
 			frappe.throw("Please select a repeat frequency (Daily, Weekly, Monthly, Yearly)")
 
-		repeat_till = getdate(original.repeat_till) if original.repeat_till else None
-		interval = original.repeat_interval or 1
-		max_occurrences = original.max_occurrences or 100
+		repeat_till = getdate(self.repeat_till) if self.repeat_till else None
+		interval = self.repeat_interval or 1
+		max_occurrences = self.max_occurrences or 100
 
-		current_date = getdate(original.appointment_date)
+		current_date = getdate(self.appointment_date)
 		count = 0
 
 		while True:
@@ -115,19 +116,20 @@ class PatientAppointment(Document):
 			# If weekly, check if selected weekday matches
 			if frequency == "Weekly":
 				weekday_map = {
-					0: original.monday,
-					1: original.tuesday,
-					2: original.wednesday,
-					3: original.thursday,
-					4: original.friday,
-					5: original.saturday,
-					6: original.sunday,
+					0: self.monday,
+					1: self.tuesday,
+					2: self.wednesday,
+					3: self.thursday,
+					4: self.friday,
+					5: self.saturday,
+					6: self.sunday,
 				}
 				if not weekday_map[current_date.weekday()]:
 					continue
 
 			# Create new appointment
-			new_appointment = frappe.copy_doc(original)
+			new_appointment = frappe.copy_doc(self)
+			new_appointment.repeat_this_event == 0
 			new_appointment.appointment_date = current_date
 			new_appointment.flags.ignore_mandatory = True
 			new_appointment.insert()

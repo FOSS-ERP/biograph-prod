@@ -878,7 +878,9 @@ let check_and_set_availability = function(frm) {
 		d.get_primary_btn().attr('disabled', true);
 
 		let fd = d.fields_dict;
-
+		d.fields_dict["repeat_this_appointment"].df.onchange =()=> {
+			d.get_primary_btn().attr('disabled', null);
+		}
 		d.fields_dict['appointment_date'].df.onchange = () => {
 			if (is_block_booking && !is_recurring_booking) {
 				if (d.get_value('appointment_date') && d.get_value('from_time') && d.get_value('to_time') && 
